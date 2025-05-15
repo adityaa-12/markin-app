@@ -1,9 +1,10 @@
 import React from 'react'
+import Head from './components/Head'
 
 const App: React.FC = () => {
   return (
-    <div className='bg-black text-white'>
-      this is my app
+    <div className='w-[80vw] max-sm:w-[90vw] mx-auto'>
+     <Head />
     </div>
   )
 }
