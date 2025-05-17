@@ -1,0 +1,93 @@
+import React, { useEffect, useState } from 'react'
+
+const ShowFiles: React.FC = () => {
+    interface fileType {
+        file_name: string;
+        file_content: string;
+        created_at: string;
+        file_id: string;
+    };
+
+    const [file, setFile] = useState<fileType[]>(() => {
+        return JSON.parse(localStorage.getItem("markin-files") || "[]");
+    });
+    console.log(file);
+
+
+    const getFiles = () => {
+        let Files: fileType[] = JSON.parse(localStorage.getItem("markin-files") || "[]");
+        setFile(Files);
+    }
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            getFiles();
+        }
+
+        window.addEventListener("updated", handleUpdate);
+
+        return () => {
+            window.removeEventListener("updated", handleUpdate);
+        }
+    }, []);
+
+    const DeleteFile = (id: string) => {
+        let confirmDelete = confirm("Are u Sure ?");
+        if (confirmDelete) {      
+            let Files: fileType[] = JSON.parse(localStorage.getItem("markin-files") || "[]");
+            const updateFiles = Files.filter(file => file.file_id !== id);
+            localStorage.setItem("markin-files", JSON.stringify(updateFiles));
+            setFile(updateFiles);
+            window.dispatchEvent(new Event("Deleted"));
+        } else {
+            return;
+        }
+    }
+
+    return (
+        <div className='mt-4'>
+            <div id="files-main">
+                <div id="head" className='font-semibold text-xl'>
+                    Your Files
+                </div>
+                <div id="files-box" className='w-full mt-2.5 flex flex-col gap-1.5'>
+                    {
+                        file.length > 0 ? (
+                            file.map((mFile) => (
+
+                                <div id="file" className='flex flex-row justify-between cursor-pointer border border-stone-200 px-1.5 py-1.5 rounded-md' key={mFile.file_id}>
+                                    <div id="flex" className='flex flex-row items-center gap-2.5'>
+                                        <span className='flex'>
+                                            <span className="flex material-symbols-outlined">
+                                                description
+                                            </span>
+                                        </span>
+                                        <p id="file_name">{mFile.file_name}</p>
+                                    </div>
+                                    <div id="flex-1" className='flex flex-row items-center gap-2.5'>
+                                        <button id="download" title='Download' className='flex border border-stone-300 rounded-md p-0.5 hover:bg-stone-200 cursor-pointer'><span className="flex material-symbols-outlined">
+                                            download
+                                        </span></button>
+                                        <button id="edit" title='Edit' className='flex border border-stone-300 rounded-md p-0.5 hover:bg-stone-200 cursor-pointer'><span className="flex material-symbols-outlined">
+                                            edit
+                                        </span></button>
+                                        <button id="delete" title='Delete' onClick={() => DeleteFile(mFile.file_id)} className='flex text-red-500 border border-stone-300 rounded-md p-0.5 hover:bg-stone-200 cursor-pointer'>
+                                            <span className="flex material-symbols-outlined">
+                                                delete
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+
+                        ) : (
+                            <div>No Files Found!</div>
+                        )
+                    }
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default ShowFiles

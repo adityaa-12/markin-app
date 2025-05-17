@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
 import "../styles/github-markdown-light.css";
+import { v4 as uuidv4 } from 'uuid';
 
 
 const Product: React.FC = () => {
@@ -14,34 +15,40 @@ const Product: React.FC = () => {
     file_content: string;
     created_at: string;
     file_id: string;
-  }
-
-  const generateID = (id: number) => {
-    const pattern = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let new_ID = "";
-    for (let i = 0; i < id; i++) {
-      const randomIndex = Math.floor(Math.random() * pattern.length);
-      new_ID += pattern[randomIndex];
-    };
-    return new_ID;
-  }
+  };
 
   let currDate = new Date().toUTCString();
-  let fileID = generateID(12);
 
   const [global, setGlobal] = useState<globalType>({
     file_name: "",
     file_content: content,
-    created_at: currDate,
-    file_id: fileID,
+    created_at: "",
+    file_id: "",
   });
 
   const SaveFile = () => {
-    if (!global.file_name || !global.file_content) {
-      console.log("empty");
+    if (global.file_name || global.file_content) {
+
+      let getFiles = JSON.parse(localStorage.getItem("markin-files") || "[]");
+      let isExist = getFiles.some((file: globalType) => file.file_name === global.file_name);
+
+      if (isExist) {
+        alert("File name is already used!");
+        return;
+      } else {
+        let newFile = {
+          ...global,
+          file_id: uuidv4(),
+          created_at: currDate,
+        }
+        getFiles.push(newFile);
+        localStorage.setItem("markin-files", JSON.stringify(getFiles));
+        window.dispatchEvent(new Event("updated"));
+        return;
+      }
+
     } else {
-      console.log("True");
-      
+      return;
     }
 
   }
@@ -68,14 +75,12 @@ const Product: React.FC = () => {
     };
   }, []);
 
-
-
   return (
     <div className='mt-4'>
-      <div id="main-wrapper" className='flex flex-row gap-1.5 max-lg:flex-col'>
-        <div id="main-container-editor" className='flex flex-col gap-2.5 px-4 py-2 w-1/2 max-lg:w-full'>
+      <div id="main-wrapper" className='flex flex-row gap-2.5 max-lg:flex-col'>
+        <div id="main-container-editor" className='flex flex-col gap-2.5 px-4 py-2 w-1/2 max-lg:w-full border border-stone-300 rounded-md'>
           <div id="file-name">
-            <input type="text" name='file_name' id='file_name' value={global.file_name} onChange={(e) => setGlobal((prev) => ({ ...prev, file_name: e.target.value }))} placeholder='Your File Name....' className='w-full border border-stone-200 py-1.5 px-1.5 rounded-lg outline-none' />
+            <input type="text" name='file_name' id='file_name' value={global.file_name} onChange={(e) => setGlobal((prev) => ({ ...prev, file_name: e.target.value }))} placeholder='Your File Name....' className='w-full py-1.5 px-1.5 rounded-lg outline-none' />
           </div>
           <div id="toolbar" className='flex flex-row w-full items-center gap-1.5 overflow-y-auto'>
             <button id="undo" title='Undo' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
@@ -125,15 +130,15 @@ const Product: React.FC = () => {
             </button>
           </div>
           <div id="md-editor-box">
-            <div id="editor" ref={editorBox} onInput={inputHandler} contentEditable suppressContentEditableWarning className='border h-[600px] border-stone-300 rounded-md px-2.5 py-1.5 outline-none w-full overflow-y-auto' />
+            <div id="editor" ref={editorBox} onInput={inputHandler} contentEditable suppressContentEditableWarning className='h-[620px] rounded-md px-2.5 py-1.5 outline-none w-full overflow-y-auto' />
           </div>
-          <div id="md-btns" className='w-full flex flex-row gap-1.5 font-medium'>
+          <div id="md-btns" className='w-full flex flex-row gap-1.5 font-medium max-md:flex-col'>
             <button id="save" className='w-full bg-black text-white py-1.5 cursor-pointer' onClick={() => SaveFile()}>Save</button>
             <button id="reset-all" className='w-full bg-black text-white py-1.5 cursor-pointer'>Reset All</button>
           </div>
         </div>
 
-        <div id="main-preview-panel" className='flex w-1/2 px-4 py-2 markdown-body border border-stone-200 rounded-md h-[750px] max-lg:w-full overflow-y-auto'>
+        <div id="main-preview-panel" className='flex w-1/2 px-4 py-2 markdown-body border border-stone-200 rounded-md h-[800px] max-lg:w-full overflow-y-auto'>
           <div id="preview" className='w-full rounded-md' dangerouslySetInnerHTML={{ __html: preview }} />
 
         </div>
