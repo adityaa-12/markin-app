@@ -2,14 +2,20 @@ import React from 'react'
 import Head from './components/Head'
 import Product from './components/Product'
 import ShowFiles from './components/ShowFiles'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 const App: React.FC = () => {
 
   return (
-    <div className='w-[80vw] max-sm:w-[90vw] mx-auto h-[1200px]'>
+    <div className='w-[80vw] max-sm:w-[90vw] mx-auto'>
       <Head />
-      <Product />
-      <ShowFiles /> 
+      <BrowserRouter>
+        <Routes>
+          <Route path='/editor' element={<Product />} />
+          <Route path='/files' element={<ShowFiles />} />
+        </Routes>
+
+      </BrowserRouter>
     </div>
   )
 }
