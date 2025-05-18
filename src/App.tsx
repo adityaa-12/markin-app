@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from './components/Home'
 import NotFound from './components/NotFound'
 import Helmet from "react-helmet"
+import { Analytics } from "@vercel/analytics/next"
 
 const App: React.FC = () => {
 
@@ -21,6 +22,7 @@ const App: React.FC = () => {
         <meta property="og:type" content='Website'/>
         <link rel="canonical" href="/"/>
       </Helmet>
+      <Analytics />
 
       {/* APP */}
       <div className='w-[80vw] max-sm:w-[90vw] mx-auto'>
