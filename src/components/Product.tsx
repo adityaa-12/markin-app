@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
-import "../styles/github-markdown-light.css";
 import { v4 as uuidv4 } from 'uuid';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import 'github-markdown-css/github-markdown-light.css';
+
 
 
 const Product: React.FC = () => {
@@ -10,7 +11,7 @@ const Product: React.FC = () => {
   const [history, setHistory] = useState<string[]>([]);
   const [index, setIndex] = useState<number>(-1);
 
-  const [content, setContent] = useState<string>("**Welcome to Markin App**");
+  const [content, setContent] = useState<string>("# Welcome to Markin Editor");
   const editorBox = useRef<HTMLDivElement | null>(null);
   const [preview, setPreview] = useState<string>("");
 
@@ -30,8 +31,10 @@ const Product: React.FC = () => {
     file_id: "",
   });
 
+  const navigate = useNavigate();
+
   const SaveFile = () => {
-    if (global.file_name || global.file_content) {
+    if (global.file_name || global.file_content.trim() !== '') {
 
       let getFiles = JSON.parse(localStorage.getItem("markin-files") || "[]");
       let isExistIndex = getFiles.findIndex((file: globalType) => file.file_id === global.file_id);
@@ -45,16 +48,18 @@ const Product: React.FC = () => {
       if (isExistIndex !== -1) {
         getFiles[isExistIndex] = updateFile;
         localStorage.setItem("markin-files", JSON.stringify(getFiles));
-        console.log("Updated!");
+        alert("File Updated!");
+        setTimeout(() => {
+          navigate("/files");
+        }, 1000);
       } else {
         updateFile.file_id = uuidv4();
         getFiles.push(updateFile);
         localStorage.setItem("markin-files", JSON.stringify(getFiles));
-        console.log("New File Saved!");
-
+        alert("New File Saved!");
       }
     } else {
-      alert("Got a problem, while saving ur file!");
+      alert("Please provide a file name and ensure the content is not empty.");
     }
 
   }
@@ -71,7 +76,7 @@ const Product: React.FC = () => {
       });
     };
   };
-  
+
   const undoBtn = () => {
     if (index > 0) {
       const newIndex = index - 1;
@@ -101,6 +106,10 @@ const Product: React.FC = () => {
   useEffect(() => {
     const converMarkdown = async () => {
       const md = await marked(content);
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+      })
       setPreview(md);
     };
     converMarkdown();
@@ -109,7 +118,7 @@ const Product: React.FC = () => {
 
   useEffect(() => {
     if (editorBox.current) {
-      editorBox.current.textContent = content;
+      editorBox.current.innerText = content;
     };
   }, []);
 
@@ -135,8 +144,8 @@ const Product: React.FC = () => {
         created_at: "",
         file_name: "",
       });
-      setContent("**Welcome to Markdown Editor**");
-      setHistory(["**Welcome to Markdown Editor**"]);
+      setContent("# Welcome to Markin Editor");
+      setHistory(["# Welcome to Markin Editor"]);
       setIndex(0);
     }
   }, []);
@@ -144,7 +153,7 @@ const Product: React.FC = () => {
   const resetAll = () => {
     if (editorBox.current) {
       editorBox.current.innerText = "";
-      setGlobal((prev) => ({...prev, file_content: "", file_name: "", file_id: "", created_at: ""}));
+      setGlobal((prev) => ({ ...prev, file_content: "", file_name: "", file_id: "", created_at: "" }));
       setContent("");
     } else {
       return;
@@ -164,16 +173,215 @@ const Product: React.FC = () => {
     const boldText = selectedText ? `**${selectedText}**` : `**bold**`;
 
     range.deleteContents();
-    range.insertNode(document.createTextNode(boldText));
+    const textNode = document.createTextNode(boldText);
+    range.insertNode(textNode);
 
-    inputHandler()
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
   }
-  
+
+  const ItalicBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const italicText = selectedText ? `*${selectedText}*` : `*Italic*`;
+
+    range.deleteContents();
+    const textNode = document.createTextNode(italicText);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
+
+  const HeadBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const Head = selectedText ? `# ${selectedText}` : `# Heading`;
+
+    range.deleteContents();
+    const textNode = document.createTextNode(Head);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
+
+  const BlockBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const blockText = selectedText ? selectedText.split("\n").map(line => `> ${line}`).join('\n') : `> BlockQuote`;
+    range.deleteContents();
+    const textNode = document.createTextNode(blockText);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
+
+  const CodeBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const codeText = selectedText ? `\`${selectedText}\`` : `\`code\``;
+    range.deleteContents();
+    const textNode = document.createTextNode(codeText);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
+
+  const StrikeBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const strikeText = selectedText ? `~~${selectedText}~~` : `~~Strike~~`;
+    range.deleteContents();
+    const textNode = document.createTextNode(strikeText);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  };
+
+  const BulletBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount == 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const bullet = selectedText ? selectedText.split("\n").map(line => `- ${line}`).join("\n") : `- Bullet Item`;
+    range.deleteContents();
+    const textNode = document.createTextNode(bullet);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
+
+  const NumberBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const number = selectedText
+      ? selectedText
+        .split("\n")
+        .map((line, idx) => `${idx + 1}. ${line}`)
+        .join("\n")
+      : `1. Numbered Item`;
+
+    range.deleteContents();
+    const textNode = document.createTextNode(number);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  };
+
+  const URLBtn = () => {
+    if (!editorBox.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString() || "Link Text";
+
+    const url = prompt("Enter URL :");
+    if (!url) return;
+
+    const markdownLink = `[${selectedText}](${url})`;
+
+    range.deleteContents();
+    const textNode = document.createTextNode(markdownLink);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    inputHandler();
+  }
 
   return (
     <div className='mt-4'>
       <div id="main-wrapper" className='flex flex-row gap-2.5 max-lg:flex-col'>
-        <div id="main-container-editor" className='flex flex-col gap-2.5 px-4 py-2 w-1/2 max-lg:w-full border border-stone-300 rounded-md'>
+        <div id="main-container-editor" className='flex flex-col gap-2.5 px-4 py-2 w-1/2 max-lg:w-full border border-stone-200 rounded-md'>
           <div id="file-name">
             <input type="text" name='file_name' id='file_name' value={global.file_name} onChange={(e) => setGlobal((prev) => ({ ...prev, file_name: e.target.value }))} placeholder='Your File Name....' className='w-full py-1.5 px-1.5 rounded-lg outline-none' />
           </div>
@@ -193,54 +401,58 @@ const Product: React.FC = () => {
                 format_bold
               </span>
             </button>
-            <button id="italic-btn" title='Italic' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="italic-btn" title='Italic' onClick={() => ItalicBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
                 format_italic
               </span>
             </button>
-            <button id="quote" title='BlockQuote' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="heading-btn" title='Heading' onClick={() => HeadBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+              <span className="flex material-symbols-outlined">
+                format_h1
+              </span>
+            </button>
+            <button id="quote" title='BlockQuote' onClick={() => BlockBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
                 format_quote
               </span>
             </button>
-            <button id="code-block" title='Code Snippet' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="code-block" title='Code Snippet' onClick={() => CodeBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
                 data_object
               </span>
             </button>
-            <button id="underline" title='Underline' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="strike" title='Strike-through' onClick={() => StrikeBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
-                format_underlined
+                strikethrough_s
               </span>
             </button>
-            <button id="comment" title='Comment' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
-              <span className="flex material-symbols-outlined">
-                tag
-              </span>
-            </button>
-            <button id="bullet-list" title='Bullet List' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="bullet-list" title='Bullet List' onClick={() => BulletBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
                 format_list_bulleted
               </span>
             </button>
-            <button id="Number-list" title='Number List' className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+            <button id="Number-list" title='Number List' onClick={() => NumberBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
               <span className="flex material-symbols-outlined">
                 format_list_numbered
               </span>
             </button>
+            <button id="URL" title='Add URL' onClick={() => URLBtn()} className='flex py-1.5 px-1.5 border border-stone-300 hover:bg-stone-100 cursor-pointer rounded-md'>
+              <span className="flex material-symbols-outlined">
+                link
+              </span>
+            </button>
           </div>
           <div id="md-editor-box">
-            <div id="editor" ref={editorBox} onInput={inputHandler} contentEditable suppressContentEditableWarning className='h-[620px] rounded-md px-2.5 py-1.5 outline-none w-full overflow-y-auto' />
+            <div id="editor" ref={editorBox} onInput={inputHandler} contentEditable suppressContentEditableWarning className='markdown-body h-[620px] rounded-md px-2.5 py-1.5 outline-none w-full overflow-y-auto' />
           </div>
           <div id="md-btns" className='w-full flex flex-row gap-1.5 font-medium max-md:flex-col'>
-            <button id="save" className='w-full bg-black text-white py-1.5 cursor-pointer' onClick={() => SaveFile()}>Save</button>
-            <button id="reset-all" className='w-full bg-gray-300 text-black py-1.5 cursor-pointer' onClick={() => resetAll()}>Reset All</button>
+            <button id="save" className='w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 cursor-pointer' onClick={() => SaveFile()}>Save</button>
+            <button id="reset-all" className='w-full bg-stone-800 text-white hover:bg-stone-950 py-1.5 cursor-pointer' onClick={() => resetAll()}>Reset All</button>
           </div>
         </div>
 
         <div id="main-preview-panel" className='flex w-1/2 px-4 py-2 markdown-body border border-stone-200 rounded-md h-[800px] max-lg:w-full overflow-y-auto'>
           <div id="preview" className='w-full rounded-md' dangerouslySetInnerHTML={{ __html: preview }} />
-
         </div>
       </div>
     </div>
