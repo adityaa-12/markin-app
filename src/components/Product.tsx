@@ -4,8 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { useLocation, useNavigate } from 'react-router-dom';
 import 'github-markdown-css/github-markdown-light.css';
 
-
-
 const Product: React.FC = () => {
 
   const [history, setHistory] = useState<string[]>([]);
@@ -14,6 +12,8 @@ const Product: React.FC = () => {
   const [content, setContent] = useState<string>("# Welcome to Markin Editor");
   const editorBox = useRef<HTMLDivElement | null>(null);
   const [preview, setPreview] = useState<string>("");
+  const [updateBtn, setUpdateBtn] = useState<boolean>(false);
+  const [saveBtn, setSaveBtn] = useState<boolean>(true);
 
   interface globalType {
     file_name: string;
@@ -34,34 +34,53 @@ const Product: React.FC = () => {
   const navigate = useNavigate();
 
   const SaveFile = () => {
-    if (global.file_name || global.file_content.trim() !== '') {
+    if (global.file_name && content.trim() !== "") {
 
       let getFiles = JSON.parse(localStorage.getItem("markin-files") || "[]");
-      let isExistIndex = getFiles.findIndex((file: globalType) => file.file_id === global.file_id);
 
-      const updateFile = {
+      let findName = getFiles.some((file: globalType) => file.file_name === global.file_name);
+
+      const newFile = {
         ...global,
         file_content: content,
         created_at: currDate,
-      };
+        file_id: uuidv4(),
+      }
 
-      if (isExistIndex !== -1) {
-        getFiles[isExistIndex] = updateFile;
-        localStorage.setItem("markin-files", JSON.stringify(getFiles));
-        alert("File Updated!");
-        setTimeout(() => {
-          navigate("/files");
-        }, 1000);
+      if (findName) {
+        alert("File name is already exist!");
       } else {
-        updateFile.file_id = uuidv4();
-        getFiles.push(updateFile);
+        getFiles.push(newFile);
         localStorage.setItem("markin-files", JSON.stringify(getFiles));
-        alert("New File Saved!");
       }
     } else {
       alert("Please provide a file name and ensure the content is not empty.");
     }
+  }
 
+  const SaveEditFile = (Editing: string) => {
+    if (Editing === "0") return;
+
+    if (global.file_name && content.trim() !== "") {
+      let getFiles = JSON.parse(localStorage.getItem("markin-files") || "[]");
+
+      const findIndex = getFiles.findIndex((file: globalType) => file.file_id === global.file_id);
+
+      if (findIndex !== -1) {
+        getFiles[findIndex] = {
+          ...global,
+          created_at: currDate,
+        };
+        localStorage.setItem("markin-files", JSON.stringify(getFiles));
+        alert("File Updated");
+        navigate("/files");
+      } else {
+        alert("File not found, Maybe it was deleted!");
+        return;
+      }
+    } else {
+      alert("Please provide a file name and ensure the content is not empty.");
+    }
   }
 
   const inputHandler = () => {
@@ -125,8 +144,18 @@ const Product: React.FC = () => {
   const location = useLocation();
   const file = location.state as globalType;
 
+  const [isEditing, setEditing] = useState("0");
+
   const queryParams = new URLSearchParams(location.search);
-  const isEditing = queryParams.get("isEditing") === "1";
+  const Editing = queryParams.get("isEditing") === "1";
+
+  useEffect(() => {
+    if (Editing) {
+      setEditing("1");
+      setUpdateBtn(true);
+      setSaveBtn(false);
+    };
+  }, [location.search]);
 
   useEffect(() => {
     if (file && isEditing) {
@@ -446,7 +475,16 @@ const Product: React.FC = () => {
             <div id="editor" ref={editorBox} onInput={inputHandler} contentEditable suppressContentEditableWarning className='markdown-body h-[620px] rounded-md px-2.5 py-1.5 outline-none w-full overflow-y-auto' />
           </div>
           <div id="md-btns" className='w-full flex flex-row gap-1.5 font-medium max-md:flex-col'>
-            <button id="save" className='w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 cursor-pointer' onClick={() => SaveFile()}>Save</button>
+            {
+              saveBtn && (
+                <button id="save" className='w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 cursor-pointer' onClick={() => SaveFile()}>Save</button>
+              )
+            }
+            {
+              updateBtn && (
+                <button id="edit" className='w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 cursor-pointer' onClick={() => SaveEditFile(isEditing)}>Update File</button>
+              )
+            }
             <button id="reset-all" className='w-full bg-stone-800 text-white hover:bg-stone-950 py-1.5 cursor-pointer' onClick={() => resetAll()}>Reset All</button>
           </div>
         </div>

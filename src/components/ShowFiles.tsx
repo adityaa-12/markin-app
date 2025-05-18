@@ -64,14 +64,15 @@ const ShowFiles: React.FC = () => {
 
     return (
         <div className='mt-4'>
-            <div id="files-main">
+            <div id="files-main" className='px-4 py-2'>
                 <div id="files-box" className='w-full mt-2.5 flex flex-col gap-1.5'>
+                    <h1 className='font-semibold text-2xl'>Your Files</h1>
                     {
                         file.length > 0 ? (
                             file.map((mFile) => (
 
                                 <div id="file" className='flex flex-row justify-between cursor-pointer border border-stone-200 px-1.5 py-1.5 rounded-md' key={mFile.file_id}>
-                                    <div id="flex" className='flex flex-row items-center gap-2.5'>
+                                    <div id="flex" className='flex flex-row items-center gap-2.5 max-sm:hidden'>
                                         <span className='flex'>
                                             <span className="flex material-symbols-outlined">
                                                 description
@@ -96,7 +97,7 @@ const ShowFiles: React.FC = () => {
                             ))
 
                         ) : (
-                            <div>No Files Found!</div>
+                            <div className='max:sm:text-center mt-4 font-medium'>No Files Found!</div>
                         )
                     }
                 </div>

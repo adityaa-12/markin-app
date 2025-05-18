@@ -5,22 +5,36 @@ import ShowFiles from './components/ShowFiles'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from './components/Home'
 import NotFound from './components/NotFound'
+import Helmet from "react-helmet"
 
 const App: React.FC = () => {
 
   return (
-    <div className='w-[80vw] max-sm:w-[90vw] mx-auto'>
-      <Head />
-      <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/editor' element={<Product />} />
-          <Route path='/files' element={<ShowFiles />} />
-          <Route path='*' element={<NotFound />} />
-        </Routes>
+    <>
+      {/* SEO */}
 
-      </BrowserRouter>
-    </div>
+      <Helmet>
+        <title>Markin - Simple, Clean Markdown Editor</title>
+        <meta name='description' content='Free online Markdown editor built with react.' />
+        <meta property='og:title' content='Markdown Editor' />
+        <meta property='og:description' content='Edit and Download Markdown Easily.' />
+        <meta property="og:type" content='Website'/>
+        <link rel="canonical" href="/"/>
+      </Helmet>
+
+      {/* APP */}
+      <div className='w-[80vw] max-sm:w-[90vw] mx-auto'>
+        <Head />
+        <BrowserRouter>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/editor' element={<Product />} />
+            <Route path='/files' element={<ShowFiles />} />
+            <Route path='*' element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </>
   )
 }
 
