@@ -6,7 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from './components/Home'
 import NotFound from './components/NotFound'
 import Helmet from "react-helmet"
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from '@vercel/analytics/react'
 
 const App: React.FC = () => {
 
