@@ -52,6 +52,7 @@ const Product: React.FC = () => {
       } else {
         getFiles.push(newFile);
         localStorage.setItem("markin-files", JSON.stringify(getFiles));
+        alert("New File Saved!");
       }
     } else {
       alert("Please provide a file name and ensure the content is not empty.");
